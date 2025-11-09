@@ -1,0 +1,594 @@
+{
+	"info": {
+		"_postman_id": "av2-springboot-collection",
+		"name": "AV2-SpringBoot-COMPLETA",
+		"description": "Coleção completa de testes para AV2 - Spring Boot API com JWT",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Login - Obter JWT",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Response has token', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('token');",
+							"    pm.expect(jsonData).to.have.property('type', 'Bearer');",
+							"    pm.expect(jsonData).to.have.property('expiresIn', 3600);",
+							"});",
+							"",
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    var token = jsonData.token;",
+							"    ",
+							"    // Salvar no environment se existir",
+							"    if (pm.environment.toObject()) {",
+							"        pm.environment.set('jwt', token);",
+							"        console.log('Token salvo no environment');",
+							"    }",
+							"    ",
+							"    // Salvar na collection variable como fallback",
+							"    pm.collectionVariables.set('jwt', token);",
+							"    console.log('Token salvo na collection: ' + token.substring(0, 50) + '...');",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"admin@fmp.br\",\n  \"senha\": \"123456\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8081/auth/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"auth",
+						"login"
+					]
+				},
+				"description": "Etapa 1: POST /auth/login - Enviar credenciais e obter JWT"
+			},
+			"response": []
+		},
+		{
+			"name": "2. GET /aluno - Listar com Token (200 OK)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Response is array', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.be.an('array');",
+							"});",
+							"",
+							"pm.test('List uses AlunoDTO - only necessary fields', function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.length > 0) {",
+							"        var aluno = jsonData[0];",
+							"        pm.expect(aluno).to.have.property('id');",
+							"        pm.expect(aluno).to.have.property('nome');",
+							"        pm.expect(aluno).to.have.property('idade');",
+							"        pm.expect(aluno).to.have.property('cpf');",
+							"        pm.expect(aluno).to.not.have.property('senha');",
+							"        pm.expect(aluno).to.not.have.property('senhaHash');",
+							"        pm.expect(aluno).to.not.have.property('password');",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt}}"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8081/aluno",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"aluno"
+					]
+				},
+				"description": "Etapa 2: GET /aluno - Listar com Authorization: Bearer <token> → 200 OK"
+			},
+			"response": []
+		},
+		{
+			"name": "3. GET /aluno - Sem Token (401 Unauthorized)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 401', function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"pm.test('Response has error message', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('status', 401);",
+							"    pm.expect(jsonData).to.have.property('error', 'Unauthorized');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/aluno",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"aluno"
+					]
+				},
+				"description": "Etapa 3: GET /aluno - Sem token → 401 Unauthorized"
+			},
+			"response": []
+		},
+		{
+			"name": "4. POST /aluno - Criar com Token (201 Created)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 201', function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test('Response has aluno data', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('id');",
+							"    pm.expect(jsonData).to.have.property('nome');",
+							"    pm.expect(jsonData).to.have.property('idade');",
+							"    pm.expect(jsonData).to.have.property('cpf');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"nome\": \"Teste Aluno\",\n  \"idade\": 20,\n  \"cpf\": \"55566677788\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8081/aluno",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"aluno"
+					]
+				},
+				"description": "Etapa 4: POST /aluno - Com token válido → 201 Created"
+			},
+			"response": []
+		},
+		{
+			"name": "5. POST /aluno - CPF Duplicado (409 Conflict)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 409', function () {",
+							"    pm.response.to.have.status(409);",
+							"});",
+							"",
+							"pm.test('Response has conflict message', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('status', 409);",
+							"    pm.expect(jsonData).to.have.property('error', 'Conflict');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"nome\": \"Outro Aluno\",\n  \"idade\": 25,\n  \"cpf\": \"55566677788\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8081/aluno",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"aluno"
+					]
+				},
+				"description": "Etapa 5: POST /aluno - CPF duplicado → 409 Conflict"
+			},
+			"response": []
+		},
+		{
+			"name": "6. GET /aluno/1 - Retorna AlunoDTO (Apenas Campos Necessários)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Response uses AlunoDTO - only necessary fields', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('id');",
+							"    pm.expect(jsonData).to.have.property('nome');",
+							"    pm.expect(jsonData).to.have.property('idade');",
+							"    pm.expect(jsonData).to.have.property('cpf');",
+							"    pm.expect(jsonData).to.not.have.property('senha');",
+							"    pm.expect(jsonData).to.not.have.property('senhaHash');",
+							"    pm.expect(jsonData).to.not.have.property('password');",
+							"    pm.expect(jsonData).to.not.have.property('createdAt');",
+							"    pm.expect(jsonData).to.not.have.property('updatedAt');",
+							"});",
+							"",
+							"pm.test('AlunoDTO has exactly 4 fields', function () {",
+							"    var jsonData = pm.response.json();",
+							"    var keys = Object.keys(jsonData);",
+							"    pm.expect(keys.length).to.equal(4);",
+							"    pm.expect(keys).to.include.members(['id', 'nome', 'idade', 'cpf']);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt}}"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8081/aluno/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"aluno",
+						"1"
+					]
+				},
+				"description": "Teste 6: GET /aluno/1 - Retorna apenas campos necessários (AlunoDTO). Verifica que NÃO retorna senha ou outros campos sensíveis. Listas usam AlunoDTO ou @Projection."
+			},
+			"response": []
+		},
+		{
+			"name": "6b. GET /aluno/999 - ID Inexistente (404 Not Found)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 404', function () {",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"",
+							"pm.test('Response has not found message', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('status', 404);",
+							"    pm.expect(jsonData).to.have.property('error', 'Não encontrado');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt}}"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8081/aluno/999",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"aluno",
+						"999"
+					]
+				},
+				"description": "Etapa 6b: GET /aluno/999 - ID inexistente → 404 Not Found"
+			},
+			"response": []
+		},
+		{
+			"name": "7. POST /auth/login - Credenciais Erradas (401 Unauthorized)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 401', function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"pm.test('Response has unauthorized message', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('status', 401);",
+							"    pm.expect(jsonData).to.have.property('error', 'Unauthorized');",
+							"    pm.expect(jsonData).to.have.property('message', 'Credenciais inválidas');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"admin@fmp.br\",\n  \"senha\": \"senhaerrada\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8081/auth/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"auth",
+						"login"
+					]
+				},
+				"description": "Etapa 7: POST /auth/login - Credenciais erradas → 401 Unauthorized"
+			},
+			"response": []
+		},
+		{
+			"name": "8. CORS Test - Frontend localhost:3000",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('CORS headers are present', function () {",
+							"    pm.expect(pm.response.headers.get('Access-Control-Allow-Origin')).to.eql('http://localhost:3000');",
+							"    pm.expect(pm.response.headers.get('Access-Control-Allow-Methods')).to.include('GET');",
+							"    pm.expect(pm.response.headers.get('Access-Control-Allow-Credentials')).to.eql('true');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "OPTIONS",
+				"header": [
+					{
+						"key": "Origin",
+						"value": "http://localhost:3000"
+					},
+					{
+						"key": "Access-Control-Request-Method",
+						"value": "GET"
+					},
+					{
+						"key": "Access-Control-Request-Headers",
+						"value": "Authorization"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8081/aluno",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"aluno"
+					]
+				},
+				"description": "Etapa 8: GET /aluno - Frontend (localhost:3000) consome API → Sem erro CORS"
+			},
+			"response": []
+		},
+		{
+			"name": "9. Gerar Hash BCrypt - Verificar Criptografia",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Hash is BCrypt format', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('senhaHash');",
+							"    pm.expect(jsonData).to.have.property('isBCrypt', 'true');",
+							"    pm.expect(jsonData.senhaHash).to.match(/^\\$2[ab]\\$/);",
+							"    pm.expect(jsonData.senhaHash.length).to.be.above(50);",
+							"});",
+							"",
+							"pm.test('Original password is different from hash', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.senhaOriginal).to.not.eql(jsonData.senhaHash);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/admin/generate-hash?senha=123456",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"admin",
+						"generate-hash"
+					],
+					"query": [
+						{
+							"key": "senha",
+							"value": "123456"
+						}
+					]
+				},
+				"description": "Teste 9: Gerar hash BCrypt para verificar que senhas são criptografadas. A senha '123456' será convertida em hash BCrypt (começa com $2a$ ou $2b$ e tem ~60 caracteres)."
+			},
+			"response": []
+		},
+		{
+			"name": "10. Listar Usuários - Ver Senhas Criptografadas (Admin)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test('Users have encrypted passwords', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.be.an('array');",
+							"    if (jsonData.length > 0) {",
+							"        var user = jsonData[0];",
+							"        pm.expect(user).to.have.property('senhaHash');",
+							"        pm.expect(user).to.have.property('isBCrypt', true);",
+							"        pm.expect(user.senhaHash).to.match(/^\\$2[ab]\\$/);",
+							"        pm.expect(user.senhaHash.length).to.be.above(50);",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt}}"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8081/admin/users",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"admin",
+						"users"
+					]
+				},
+				"description": "Teste 10: Listar usuários (requer role ADMIN). Mostra que senhas no banco estão criptografadas com BCrypt (hash começa com $2a$ ou $2b$)."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "jwt",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

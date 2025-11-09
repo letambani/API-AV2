@@ -1,0 +1,1 @@
+package br.fmp.av2.exception; public class CpfDuplicadoException extends RuntimeException { public CpfDuplicadoException(String message) { super(message); } public CpfDuplicadoException(String cpf, String message) { super(message != null ? message : "Já existe uma pessoa com cpf: " + cpf); } } 

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Login - AV2 API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .resultado {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .sucesso {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .erro {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .token {
+            word-break: break-all;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .alunos {
+            margin-top: 20px;
+        }
+        .aluno-item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f8f9fa;
+            border-left: 3px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Teste de Login - AV2 API</h1>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="admin@fmp.br" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="senha">Senha:</label>
+                <input type="password" id="senha" value="123456" required>
+            </div>
+            
+            <button type="submit" id="btnLogin">Login</button>
+        </form>
+        
+        <div id="resultado"></div>
+        <div id="token" class="token"></div>
+        <div id="alunos" class="alunos"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8081';
+        let token = null;
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await fazerLogin();
+        });
+
+        async function fazerLogin() {
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            const resultadoDiv = document.getElementById('resultado');
+            const tokenDiv = document.getElementById('token');
+            const btnLogin = document.getElementById('btnLogin');
+
+            btnLogin.disabled = true;
+            btnLogin.textContent = 'Carregando...';
+            resultadoDiv.innerHTML = '<div class="info">Fazendo login...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, senha })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    token = data.token;
+                    localStorage.setItem('jwt', token);
+                    
+                    resultadoDiv.innerHTML = `
+                        <div class="sucesso">
+                            <strong>Login realizado com sucesso!</strong><br>
+                            Tipo: ${data.type}<br>
+                            Expira em: ${data.expiresIn} segundos
+                        </div>
+                    `;
+                    
+                    tokenDiv.innerHTML = `<strong>Token:</strong> ${token.substring(0, 80)}...`;
+                    
+                    await buscarAlunos();
+                } else {
+                    resultadoDiv.innerHTML = `
+                        <div class="erro">
+                            <strong>Erro no login:</strong><br>
+                            Status: ${data.status}<br>
+                            Mensagem: ${data.message}
+                        </div>
+                    `;
+                    tokenDiv.innerHTML = '';
+                }
+            } catch (error) {
+                resultadoDiv.innerHTML = `
+                    <div class="erro">
+                        <strong>Erro de conexão:</strong><br>
+                        ${error.message}<br>
+                        <small>Verifique se a API está rodando em http://localhost:8081</small>
+                    </div>
+                `;
+                tokenDiv.innerHTML = '';
+            } finally {
+                btnLogin.disabled = false;
+                btnLogin.textContent = 'Login';
+            }
+        }
+
+        async function buscarAlunos() {
+            if (!token) {
+                token = localStorage.getItem('jwt');
+            }
+            
+            if (!token) {
+                console.log('Token não disponível');
+                return;
+            }
+
+            const alunosDiv = document.getElementById('alunos');
+            alunosDiv.innerHTML = '<div class="info">Buscando alunos...</div>';
+
+            try {
+                const response = await fetch(`${API_URL}/aluno`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alunosDiv.innerHTML = `
+                        <h3>Alunos Cadastrados (${data.length})</h3>
+                        ${data.map(aluno => `
+                            <div class="aluno-item">
+                                <strong>ID:</strong> ${aluno.id}<br>
+                                <strong>Nome:</strong> ${aluno.nome}<br>
+                                <strong>Idade:</strong> ${aluno.idade}<br>
+                                <strong>CPF:</strong> ${aluno.cpf}
+                            </div>
+                        `).join('')}
+                    `;
+                } else {
+                    alunosDiv.innerHTML = `
+                        <div class="erro">
+                            Erro ao buscar alunos:<br>
+                            ${data.message || 'Erro desconhecido'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                alunosDiv.innerHTML = `
+                    <div class="erro">
+                        Erro ao buscar alunos:<br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        window.addEventListener('load', () => {
+            const savedToken = localStorage.getItem('jwt');
+            if (savedToken) {
+                token = savedToken;
+                document.getElementById('resultado').innerHTML = `
+                    <div class="info">
+                        Token encontrado no localStorage. Clique em "Buscar Alunos" para testar.
+                    </div>
+                `;
+                document.getElementById('token').innerHTML = `<strong>Token:</strong> ${token.substring(0, 80)}...`;
+                
+                const btnBuscar = document.createElement('button');
+                btnBuscar.textContent = 'Buscar Alunos';
+                btnBuscar.onclick = buscarAlunos;
+                btnBuscar.style.marginTop = '10px';
+                document.getElementById('loginForm').appendChild(btnBuscar);
+            }
+        });
+    </script>
+</body>
+</html>
+
