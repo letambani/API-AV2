@@ -24,7 +24,20 @@ Contém:
 - Estrutura de pacotes
 - Responsabilidades por camada
 
-### 3. Fluxo de Autenticação e Segurança com Spring Security
+### 3. Fluxo Básico de Autenticação
+**Arquivo:** `diagrama-autenticacao-basico.md`
+
+Contém:
+- Fluxo simples de login e uso do token
+- Fluxo visual simplificado
+- Componentes básicos
+- Passo a passo do fluxo
+- Comparação com e sem token
+- Exemplo prático: Login e Listar Alunos
+- Resumo em 3 passos
+- Estados do token
+
+### 4. Fluxo de Autenticação e Segurança com Spring Security
 **Arquivo:** `diagrama-spring-security.md`
 
 Contém:
