@@ -24,6 +24,23 @@ Contém:
 - Estrutura de pacotes
 - Responsabilidades por camada
 
+### 3. Fluxo de Autenticação e Segurança com Spring Security
+**Arquivo:** `diagrama-spring-security.md`
+
+Contém:
+- Visão geral do Spring Security
+- Fluxo completo de autenticação
+- Filtros do Spring Security (Filter Chain)
+- JwtAuthFilter detalhado
+- SecurityConfig e configurações
+- AuthenticationManager e Providers
+- SecurityContext e Thread-Local Storage
+- Fluxo de autorização
+- Exception Handling
+- CORS Configuration
+- Comparação Autenticação vs Autorização
+- Resumo do fluxo completo
+
 ## 🖼️ Como Visualizar os Diagramas
 
 ### Opção 1: GitHub (Recomendado)
@@ -63,6 +80,10 @@ Veja os diagramas detalhados em [docs/diagrama-arquitetura-mvc.md](docs/diagrama
 ## Autenticação JWT
 
 Veja o fluxo completo em [docs/diagrama-jwt-fluxo.md](docs/diagrama-jwt-fluxo.md)
+
+## Spring Security
+
+Veja o fluxo detalhado de autenticação e segurança em [docs/diagrama-spring-security.md](docs/diagrama-spring-security.md)
 ```
 
 ## 🔧 Gerar Imagens PNG/SVG
@@ -86,4 +107,6 @@ mmdc -i docs/diagrama-arquitetura-mvc.md -o docs/arquitetura-mvc.svg
 docker run --rm -v $(pwd)/docs:/data minlag/mermaid-cli \
   -i /data/diagrama-jwt-fluxo.md -o /data/jwt-fluxo.png
 ```
+
+
 
